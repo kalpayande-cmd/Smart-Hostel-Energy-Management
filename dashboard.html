@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Hostel | Energy Dashboard</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a, #1e1b4b, #312e81);
+            color: white;
+            padding: 30px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 35px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+        }
+
+        .header p {
+            color: #cbd5e1;
+            margin-top: 6px;
+        }
+
+        .live-status {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid #22c55e;
+            color: #86efac;
+            padding: 10px 18px;
+            border-radius: 30px;
+            font-weight: bold;
+        }
+
+        .dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #22c55e;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.7); }
+            70% { box-shadow: 0 0 0 12px rgba(34,197,94,0); }
+            100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+        }
+
+        .section-title {
+            font-size: 22px;
+            margin: 30px 0 18px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            position: relative;
+            overflow: hidden;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 22px;
+            transition: 0.3s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .icon {
+            font-size: 30px;
+            margin-bottom: 14px;
+        }
+
+        .label {
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+
+        .value {
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .unit {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .temperature { border-left: 5px solid #f97316; }
+        .humidity { border-left: 5px solid #38bdf8; }
+        .occupancy { border-left: 5px solid #a855f7; }
+        .current { border-left: 5px solid #22c55e; }
+        .power { border-left: 5px solid #ec4899; }
+
+        .ai-card {
+            border: 1px solid rgba(168,85,247,0.55);
+            box-shadow: 0 0 25px rgba(168,85,247,0.12);
+        }
+
+        .ai-status {
+            font-size: 23px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .ai-high { color: #86efac; }
+        .ai-medium { color: #fde68a; }
+        .ai-low { color: #fca5a5; }
+
+        .energy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 20px;
+        }
+
+        .energy-card {
+            background: linear-gradient(
+                135deg,
+                rgba(14,165,233,0.25),
+                rgba(99,102,241,0.25)
+            );
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .energy-value {
+            font-size: 30px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .chart-card {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 25px;
+            height: 380px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        }
+
+        .wastage-box {
+            margin-top: 20px;
+            padding: 22px;
+            border-radius: 20px;
+            background: rgba(34,197,94,0.12);
+            border: 1px solid #22c55e;
+        }
+
+        .wastage-box.danger {
+            background: rgba(239,68,68,0.18);
+            border-color: #ef4444;
+            animation: warningPulse 1.5s infinite;
+        }
+
+        @keyframes warningPulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(239,68,68,0.2); }
+            50% { box-shadow: 0 0 30px rgba(239,68,68,0.7); }
+        }
+
+        .wastage-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .wastage-message {
+            margin-top: 8px;
+            color: #cbd5e1;
+        }
+
+        .alerts {
+            margin-top: 20px;
+        }
+
+        .alert-item {
+            background: rgba(239,68,68,0.12);
+            border-left: 5px solid #ef4444;
+            padding: 18px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+        }
+
+        .alert-time {
+            color: #94a3b8;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        .no-alert {
+            background: rgba(34,197,94,0.1);
+            padding: 18px;
+            border-radius: 12px;
+            border: 1px solid rgba(34,197,94,0.4);
+        }
+
+        .error-box {
+            display: none;
+            background: rgba(239,68,68,0.15);
+            border: 1px solid #ef4444;
+            color: #fecaca;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 18px; }
+            .header h1 { font-size: 25px; }
+            .value { font-size: 25px; }
+            .chart-card { height: 320px; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <div>
+            <h1>🏠 Smart Hostel Dashboard</h1>
+            <p>Real-Time Energy & Room Monitoring System</p>
+        </div>
+
+        <div class="live-status">
+            <span class="dot"></span>
+            LIVE SYSTEM
+        </div>
+    </div>
+
+    <div id="errorBox" class="error-box"></div>
+
+    <!-- =====================================================
+         LIVE ROOM MONITORING
+    ====================================================== -->
+
+    <h2 class="section-title">📡 Live Room Monitoring</h2>
+
+    <div class="grid">
+
+        <div class="card temperature">
+            <div class="icon">🌡️</div>
+            <div class="label">Temperature</div>
+            <div class="value">
+                <span id="temperature">--</span>
+                <span class="unit">°C</span>
+            </div>
+        </div>
+
+        <div class="card humidity">
+            <div class="icon">💧</div>
+            <div class="label">Humidity</div>
+            <div class="value">
+                <span id="humidity">--</span>
+                <span class="unit">%</span>
+            </div>
+        </div>
+
+        <div class="card occupancy">
+            <div class="icon">👥</div>
+            <div class="label">Room Occupancy</div>
+            <div class="value" id="occupancy">--</div>
+        </div>
+
+        <div class="card current">
+            <div class="icon">⚡</div>
+            <div class="label">Current Consumption</div>
+            <div class="value">
+                <span id="current">--</span>
+                <span class="unit">A</span>
+            </div>
+        </div>
+
+        <div class="card power">
+            <div class="icon">🔌</div>
+            <div class="label">Power Consumption</div>
+            <div class="value">
+                <span id="power">--</span>
+                <span class="unit">W</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- =====================================================
+         INTELLIGENT ROOM MONITORING
+    ====================================================== -->
+
+    <h2 class="section-title">🧠 Intelligent Room Monitoring</h2>
+
+    <div class="grid">
+
+        <div class="card occupancy">
+            <div class="icon">👥</div>
+            <div class="label">Probable People in Room</div>
+            <div class="value">
+                <span id="occupancy_count">--</span>
+                <span class="unit">people</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="icon">🚶</div>
+            <div class="label">PIR Motion</div>
+            <div class="value" id="pir_status">--</div>
+        </div>
+
+        <div class="card">
+            <div class="icon">📏</div>
+            <div class="label">Distance from Door</div>
+            <div class="value">
+                <span id="ultrasonic_distance">--</span>
+                <span class="unit">cm</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="icon">🚪</div>
+            <div class="label">Last Door Event</div>
+            <div class="value" id="entry_exit_event">--</div>
+        </div>
+
+        <div class="card">
+            <div class="icon">🫁</div>
+            <div class="label">MQ135 Air Quality Level</div>
+            <div class="value" id="mq135_raw">--</div>
+            <div class="unit" id="mq135_trend">Waiting for data</div>
+        </div>
+
+        <div class="card">
+            <div class="icon">📈</div>
+            <div class="label">Gas Rise Streak</div>
+            <div class="value" id="gas_rise_streak">--</div>
+            <div class="unit">consecutive readings</div>
+        </div>
+
+        <div class="card">
+            <div class="icon">🌀</div>
+            <div class="label">Fan Status</div>
+            <div class="value" id="fan_status">--</div>
+        </div>
+
+        <div class="card">
+            <div class="icon">💡</div>
+            <div class="label">Light Status</div>
+            <div class="value" id="light_status">--</div>
+        </div>
+
+        <!-- AI OCCUPANCY -->
+
+        <div class="card ai-card">
+            <div class="icon">🤖</div>
+
+            <div class="label">AI Occupancy Prediction</div>
+
+            <div class="ai-status" id="ai_occupancy_status">
+                MODEL NOT LOADED
+            </div>
+
+            <div class="unit" id="ai_occupancy_probability">
+                Occupied Probability: --
+            </div>
+
+            <div class="unit" id="ai_occupancy_confidence">
+                Confidence: --
+            </div>
+
+            <div class="unit" id="ai_occupancy_message">
+                Waiting for ML model...
+            </div>
+        </div>
+
+    </div>
+            <!-- AI ENERGY -->
+
+        <div class="card ai-card">
+
+            <div class="icon">⚡🤖</div>
+
+            <div class="label">AI Energy Prediction</div>
+
+            <div class="ai-status" id="energyMLPrediction">
+                MODEL NOT LOADED
+            </div>
+
+            <div class="unit" id="energyMLConfidence">
+                Confidence: --
+            </div>
+
+        </div>
+
+    <!-- =====================================================
+         ENERGY ANALYTICS
+    ====================================================== -->
+
+    <h2 class="section-title">⚡ Energy Analytics</h2>
+
+    <div class="energy-grid">
+
+        <div class="energy-card">
+            <div class="label">Today's Energy Consumption</div>
+            <div class="energy-value">
+                <span id="today_energy_wh">--</span> Wh
+            </div>
+        </div>
+
+        <div class="energy-card">
+            <div class="label">Today's Energy Consumption</div>
+            <div class="energy-value">
+                <span id="today_energy_kwh">--</span> kWh
+            </div>
+        </div>
+
+        <div class="energy-card">
+            <div class="label">Total Sensor Readings Today</div>
+            <div class="energy-value" id="total_readings">--</div>
+        </div>
+
+        <div class="energy-card">
+            <div class="label">Wastage Alerts Today</div>
+            <div class="energy-value" id="wastage_alerts">--</div>
+        </div>
+
+    </div>
+
+    <!-- =====================================================
+         POWER CHART
+    ====================================================== -->
+
+    <h2 class="section-title">📈 Live Power Consumption</h2>
+
+    <div class="chart-card">
+        <canvas id="powerChart"></canvas>
+    </div>
+
+    <!-- =====================================================
+         ENVIRONMENT CHART
+    ====================================================== -->
+
+    <h2 class="section-title">🌡️ Temperature & Humidity Trends</h2>
+
+    <div class="chart-card">
+        <canvas id="environmentChart"></canvas>
+    </div>
+
+    <!-- =====================================================
+         MQ135 CHART
+    ====================================================== -->
+
+    <h2 class="section-title">🫁 Air Quality Trend</h2>
+
+    <div class="chart-card">
+        <canvas id="mq135Chart"></canvas>
+    </div>
+
+    <!-- =====================================================
+         WASTAGE MONITOR
+    ====================================================== -->
+
+    <h2 class="section-title">🚨 Energy Wastage Monitor</h2>
+
+    <div class="wastage-box" id="wastageBox">
+        <div class="wastage-title" id="wastageTitle">
+            Checking System...
+        </div>
+
+        <div class="wastage-message" id="wastageMessage">
+            Analyzing occupancy and power consumption.
+        </div>
+    </div>
+
+    <!-- =====================================================
+         ALERT HISTORY
+    ====================================================== -->
+
+    <h2 class="section-title">⚠️ Recent Alert History</h2>
+
+    <div class="alerts" id="alerts">
+        Loading alerts...
+    </div>
+
+    <footer>
+        Smart Hostel Energy Monitoring System • Real-Time IoT Dashboard
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+
+        // =====================================================
+        // HELPER FUNCTIONS
+        // =====================================================
+
+        function setText(id, value) {
+            const element = document.getElementById(id);
+
+            if (element) {
+                element.textContent = value;
+            }
+        }
+
+        function showError(message) {
+            const box = document.getElementById("errorBox");
+
+            if (!box) return;
+
+            box.textContent = message;
+            box.style.display = "block";
+
+            setTimeout(() => {
+                box.style.display = "none";
+            }, 5000);
+        }
+
+        function formatNumber(value, decimals = 2) {
+            const number = Number(value);
+
+            if (!Number.isFinite(number)) {
+                return "--";
+            }
+
+            return number.toFixed(decimals);
+        }
+
+        // =====================================================
+        // LIVE SENSOR DATA
+        // =====================================================
+
+        async function loadLatestSensorData() {
+
+            try {
+
+                const response =
+                    await fetch("/api/latest-sensor-data");
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Latest sensor API returned HTTP " +
+                        response.status
+                    );
+                }
+
+                const result =
+                    await response.json();
+
+                if (!result.success || !result.data) {
+                    return;
+                }
+
+                const data = result.data;
+
+                // -----------------------------
+                // BASIC SENSOR VALUES
+                // -----------------------------
+
+                setText(
+                    "temperature",
+                    formatNumber(data.temperature, 1)
+                );
+
+                setText(
+                    "humidity",
+                    formatNumber(data.humidity, 1)
+                );
+
+                setText(
+                    "current",
+                    formatNumber(data.current, 2)
+                );
+
+                setText(
+                    "power",
+                    formatNumber(data.power, 2)
+                );
+
+                // -----------------------------
+                // OCCUPANCY
+                // -----------------------------
+
+                const occupancyCount =
+                    Number(data.occupancy_count) || 0;
+
+                setText(
+                    "occupancy",
+                    occupancyCount > 0
+                        ? "OCCUPIED"
+                        : "EMPTY"
+                );
+
+                setText(
+                    "occupancy_count",
+                    occupancyCount
+                );
+
+                // -----------------------------
+                // PIR
+                // -----------------------------
+
+                setText(
+                    "pir_status",
+                    Number(data.pir) === 1
+                        ? "MOTION DETECTED"
+                        : "NO MOTION"
+                );
+
+                // -----------------------------
+                // ULTRASONIC
+                // -----------------------------
+
+                setText(
+                    "ultrasonic_distance",
+                    formatNumber(
+                        data.ultrasonic_distance,
+                        1
+                    )
+                );
+
+                // -----------------------------
+                // ENTRY / EXIT
+                // -----------------------------
+
+                setText(
+                    "entry_exit_event",
+                    data.entry_exit_event || "NONE"
+                );
+
+                // -----------------------------
+                // MQ135
+                // -----------------------------
+
+                setText(
+                    "mq135_raw",
+                    Math.round(Number(data.mq135_raw) || 0)
+                );
+
+                const mqTrend =
+                    document.getElementById("mq135_trend");
+
+                const mqChange =
+                    Number(data.mq135_change) || 0;
+
+                if (mqTrend) {
+
+                    if (mqChange > 0) {
+
+                        mqTrend.textContent =
+                            "↑ Rising (" +
+                            mqChange +
+                            ")";
+
+                    }
+                    else if (mqChange < 0) {
+
+                        mqTrend.textContent =
+                            "↓ Falling (" +
+                            mqChange +
+                            ")";
+
+                    }
+                    else {
+
+                        mqTrend.textContent =
+                            "→ Stable";
+
+                    }
+
+                }
+
+                // -----------------------------
+                // GAS RISE STREAK
+                // -----------------------------
+
+                setText(
+                    "gas_rise_streak",
+                    data.gas_rise_streak ?? "--"
+                );
+
+                // -----------------------------
+                // APPLIANCE STATES
+                // -----------------------------
+
+                setText(
+                    "fan_status",
+                    Number(data.fan_state) === 1
+                        ? "ON"
+                        : "OFF"
+                );
+
+                setText(
+                    "light_status",
+                    Number(data.light_state) === 1
+                        ? "ON"
+                        : "OFF"
+                );
+
+                // -----------------------------
+                // AI OCCUPANCY
+                // -----------------------------
+
+                const aiStatus =
+                    document.getElementById(
+                        "ai_occupancy_status"
+                    );
+
+                const aiProbability =
+                    document.getElementById(
+                        "ai_occupancy_probability"
+                    );
+
+                const aiConfidence =
+                    document.getElementById(
+                        "ai_occupancy_confidence"
+                    );
+
+                const aiMessage =
+                    document.getElementById(
+                        "ai_occupancy_message"
+                    );
+
+                const prediction =
+                    data.ml_occupancy_prediction;
+
+                const probability =
+                    Number(
+                        data.ml_occupancy_probability
+                    );
+
+                /*
+                 * Some versions of the Flask API return
+                 * ml_confidence, while older versions only
+                 * return the occupancy probability.
+                 */
+                const confidenceValue =
+                    data.ml_confidence !== null &&
+                    data.ml_confidence !== undefined
+                        ? Number(data.ml_confidence)
+                        : probability;
+
+                if (
+                    prediction === null ||
+                    prediction === undefined
+                ) {
+
+                    aiStatus.textContent =
+                        "MODEL NOT LOADED";
+
+                    aiStatus.className =
+                        "ai-status ai-low";
+
+                    aiProbability.textContent =
+                        "Occupied Probability: --";
+
+                    aiConfidence.textContent =
+                        "Confidence: --";
+
+                    aiMessage.textContent =
+                        "Waiting for ML model...";
+
+                }
+                else {
+
+                    const occupied =
+                        Number(prediction) === 1;
+
+                    aiStatus.textContent =
+                        occupied
+                            ? "LIKELY OCCUPIED"
+                            : "LIKELY EMPTY";
+
+                    if (
+                        Number.isFinite(probability)
+                    ) {
+
+                        aiProbability.textContent =
+                            "Occupied Probability: " +
+                            (
+                                probability * 100
+                            ).toFixed(2) +
+                            "%";
+
+                    }
+                    else {
+
+                        aiProbability.textContent =
+                            "Occupied Probability: --";
+
+                    }
+
+                    if (
+                        Number.isFinite(
+                            confidenceValue
+                        )
+                    ) {
+
+                        const confidence =
+                            confidenceValue * 100;
+
+                        let status;
+
+                        if (confidence >= 80) {
+                            status = "HIGH";
+                            aiStatus.className =
+                                "ai-status ai-high";
+                        }
+                        else if (confidence >= 60) {
+                            status = "MEDIUM";
+                            aiStatus.className =
+                                "ai-status ai-medium";
+                        }
+                        else {
+                            status = "LOW";
+                            aiStatus.className =
+                                "ai-status ai-low";
+                        }
+
+                        aiConfidence.textContent =
+                            "Confidence: " +
+                            confidence.toFixed(2) +
+                            "% (" +
+                            status +
+                            ")";
+
+                    }
+                    else {
+
+                        aiConfidence.textContent =
+                            "Confidence: --";
+
+                    }
+
+                    aiMessage.textContent =
+                        "Sensor Fusion: PIR + Ultrasonic + MQ135";
+
+                }
+                            // -----------------------------
+                // AI ENERGY PREDICTION
+                // -----------------------------
+
+                const energyPrediction =
+                    document.getElementById(
+                        "energyMLPrediction"
+                    );
+
+                const energyConfidence =
+                    document.getElementById(
+                        "energyMLConfidence"
+                    );
+
+                const energyPredictionValue =
+                    data.ml_energy_prediction;
+
+                const energyConfidenceValue =
+                    Number(data.ml_energy_confidence);
+
+                const energyStatus =
+                    data.ml_energy_status;
+                // If energy ML data is unavailable
+                if (
+                    energyPredictionValue === null ||
+                    energyPredictionValue === undefined
+                ) {
+
+                    energyPrediction.textContent =
+                        "MODEL NOT LOADED";
+
+                    energyPrediction.className =
+                        "ai-status ai-low";
+
+                    energyConfidence.textContent =
+                        "Confidence: --";
+
+                }
+
+                // Energy ML data available
+                else {
+
+                    energyPrediction.textContent =
+                        String(
+                            energyPredictionValue
+                        );
+
+                    // Prediction styling
+                    if (
+                        energyPredictionValue === "WASTAGE"
+                    ) {
+
+                        energyPrediction.className =
+                            "ai-status ai-low";
+
+                    }
+                    else if (
+                        energyPredictionValue === "LOW"
+                    ) {
+
+                        energyPrediction.className =
+                            "ai-status ai-medium";
+
+                    }
+                    else {
+
+                        energyPrediction.className =
+                            "ai-status ai-high";
+
+                    }
+
+                    // Confidence
+                    if (
+                        Number.isFinite(
+                            energyConfidenceValue
+                        )
+                    ) {
+
+                        energyConfidence.textContent =
+                            "Confidence: " +
+                            (
+                                energyConfidenceValue * 100
+                            ).toFixed(2) +
+                            "%";
+
+                    }
+                    else {
+
+                        energyConfidence.textContent =
+                            "Confidence: --";
+
+                    }
+
+                }
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Error loading sensor data:",
+                    error
+                );
+
+                showError(
+                    "Unable to load latest sensor data."
+                );
+
+            }
+
+        }
+
+        // =====================================================
+        // DAILY ENERGY
+        // =====================================================
+
+        async function loadDailyEnergy() {
+
+            try {
+
+                const response =
+                    await fetch("/api/daily-energy");
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Daily energy API returned HTTP " +
+                        response.status
+                    );
+                }
+
+                const data =
+                    await response.json();
+
+                if (!data.success) {
+                    return;
+                }
+
+                setText(
+                    "today_energy_wh",
+                    formatNumber(
+                        data.total_energy_wh,
+                        3
+                    )
+                );
+
+                setText(
+                    "today_energy_kwh",
+                    formatNumber(
+                        data.total_energy_kwh,
+                        6
+                    )
+                );
+
+                setText(
+                    "total_readings",
+                    data.total_readings ?? "--"
+                );
+
+                setText(
+                    "wastage_alerts",
+                    data.wastage_alerts ?? "--"
+                );
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Error loading energy data:",
+                    error
+                );
+
+            }
+
+        }
+
+        // =====================================================
+        // WASTAGE STATUS
+        // =====================================================
+
+        async function loadWastageStatus() {
+
+            try {
+
+                const response =
+                    await fetch("/api/wastage-status");
+
+                const data =
+                    await response.json();
+
+                const box =
+                    document.getElementById(
+                        "wastageBox"
+                    );
+
+                const title =
+                    document.getElementById(
+                        "wastageTitle"
+                    );
+
+                const message =
+                    document.getElementById(
+                        "wastageMessage"
+                    );
+
+                if (data.wastage_detected) {
+
+                    box.classList.add("danger");
+
+                    title.textContent =
+                        "⚠️ ENERGY WASTAGE DETECTED";
+
+                    message.textContent =
+                        (
+                            data.message ||
+                            "Unnecessary energy usage detected."
+                        ) +
+                        " (" +
+                        (
+                            data.empty_room_readings ?? 0
+                        ) +
+                        " consecutive empty readings)";
+
+                }
+                else {
+
+                    box.classList.remove("danger");
+
+                    title.textContent =
+                        "✅ No Energy Wastage Detected";
+
+                    message.textContent =
+                        "Room energy usage is currently normal.";
+
+                }
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Error loading wastage status:",
+                    error
+                );
+
+            }
+
+        }
+
+        // =====================================================
+        // ALERT HISTORY
+        // =====================================================
+
+        async function loadAlerts() {
+
+            try {
+
+                const response =
+                    await fetch("/api/alerts");
+
+                const result =
+                    await response.json();
+
+                const container =
+                    document.getElementById("alerts");
+
+                container.innerHTML = "";
+
+                if (
+                    result.success &&
+                    Array.isArray(result.data) &&
+                    result.data.length > 0
+                ) {
+
+                    result.data
+                        .slice(0, 5)
+                        .forEach(alert => {
+
+                            const element =
+                                document.createElement(
+                                    "div"
+                                );
+
+                            element.className =
+                                "alert-item";
+
+                            const type =
+                                alert.alert_type ??
+                                "ALERT";
+
+                            const message =
+                                alert.message ??
+                                "No message";
+
+                            const current =
+                                alert.current ??
+                                "--";
+
+                            const power =
+                                alert.power ??
+                                "--";
+
+                            const timestamp =
+                                alert.timestamp ??
+                                "--";
+
+                            element.innerHTML = `
+                                <strong>⚠ ${type}</strong>
+                                <div>${message}</div>
+                                <div>
+                                    Current: ${current} A |
+                                    Power: ${power} W
+                                </div>
+                                <div class="alert-time">
+                                    ${timestamp}
+                                </div>
+                            `;
+
+                            container.appendChild(
+                                element
+                            );
+
+                        });
+
+                }
+                else {
+
+                    container.innerHTML = `
+                        <div class="no-alert">
+                            ✅ No alerts recorded yet.
+                        </div>
+                    `;
+
+                }
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Error loading alerts:",
+                    error
+                );
+
+            }
+
+        }
+
+        // =====================================================
+        // CHART HELPERS
+        // =====================================================
+
+        function chartOptions() {
+
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: "#ffffff"
+                        }
+                    }
+                },
+
+                scales: {
+                    x: {
+                        ticks: {
+                            color: "#cbd5e1"
+                        },
+                        grid: {
+                            color:
+                                "rgba(255,255,255,0.08)"
+                        }
+                    },
+
+                    y: {
+                        ticks: {
+                            color: "#cbd5e1"
+                        },
+                        grid: {
+                            color:
+                                "rgba(255,255,255,0.08)"
+                        }
+                    }
+                }
+            };
+
+        }
+
+        // =====================================================
+        // POWER CHART
+        // =====================================================
+
+        let powerChart = null;
+
+        async function loadPowerChart() {
+
+            try {
+
+                const response =
+                    await fetch("/api/recent-readings");
+
+                const result =
+                    await response.json();
+
+                if (
+                    !result.success ||
+                    !Array.isArray(result.data)
+                ) {
+                    return;
+                }
+
+                const readings =
+                    result.data;
+
+                const labels =
+                    readings.map(reading =>
+                        String(
+                            reading.timestamp || ""
+                        ).split(" ")[1] || ""
+                    );
+
+                const powerData =
+                    readings.map(reading =>
+                        Number(reading.power) || 0
+                    );
+
+                const canvas =
+                    document.getElementById(
+                        "powerChart"
+                    );
+
+                if (!canvas) return;
+
+                if (powerChart) {
+
+                    powerChart.data.labels =
+                        labels;
+
+                    powerChart.data.datasets[0].data =
+                        powerData;
+
+                    powerChart.update();
+
+                    return;
+                }
+
+                const options =
+                    chartOptions();
+
+                options.scales.y.beginAtZero = true;
+
+                powerChart =
+                    new Chart(canvas, {
+
+                        type: "line",
+
+                        data: {
+                            labels: labels,
+
+                            datasets: [{
+                                label:
+                                    "Power Consumption (W)",
+
+                                data: powerData,
+
+                                borderColor:
+                                    "#ec4899",
+
+                                backgroundColor:
+                                    "rgba(236,72,153,0.15)",
+
+                                fill: true,
+
+                                tension: 0.4,
+
+                                borderWidth: 3,
+
+                                pointRadius: 3
+                            }]
+                        },
+
+                        options: options
+                    });
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Error loading power chart:",
+                    error
+                );
+
+            }
+
+        }
+
+        // =====================================================
+        // TEMPERATURE + HUMIDITY CHART
+        // =====================================================
+
+        let environmentChart = null;
+
+        async function loadEnvironmentChart() {
+
+            try {
+
+                const response =
+                    await fetch("/api/recent-readings");
+
+                const result =
+                    await response.json();
+
+                if (
+                    !result.success ||
+                    !Array.isArray(result.data)
+                ) {
+                    return;
+                }
+
+                const readings =
+                    result.data;
+
+                const labels =
+                    readings.map(reading =>
+                        String(
+                            reading.timestamp || ""
+                        ).split(" ")[1] || ""
+                    );
+
+                const temperatureData =
+                    readings.map(reading =>
+                        Number(reading.temperature) || 0
+                    );
+
+                const humidityData =
+                    readings.map(reading =>
+                        Number(reading.humidity) || 0
+                    );
+
+                const canvas =
+                    document.getElementById(
+                        "environmentChart"
+                    );
+
+                if (!canvas) return;
+
+                if (environmentChart) {
+
+                    environmentChart.data.labels =
+                        labels;
+
+                    environmentChart.data.datasets[0].data =
+                        temperatureData;
+
+                    environmentChart.data.datasets[1].data =
+                        humidityData;
+
+                    environmentChart.update();
+
+                    return;
+                }
+
+                environmentChart =
+                    new Chart(canvas, {
+
+                        type: "line",
+
+                        data: {
+
+                            labels: labels,
+
+                            datasets: [
+
+                                {
+                                    label:
+                                        "Temperature (°C)",
+
+                                    data:
+                                        temperatureData,
+
+                                    yAxisID:
+                                        "temperatureAxis",
+
+                                    borderColor:
+                                        "#f97316",
+
+                                    backgroundColor:
+                                        "rgba(249,115,22,0.10)",
+
+                                    fill: false,
+
+                                    tension: 0.4,
+
+                                    borderWidth: 3,
+
+                                    pointRadius: 3
+                                },
+
+                                {
+                                    label:
+                                        "Humidity (%)",
+
+                                    data:
+                                        humidityData,
+
+                                    yAxisID:
+                                        "humidityAxis",
+
+                                    borderColor:
+                                        "#38bdf8",
+
+                                    backgroundColor:
+                                        "rgba(56,189,248,0.10)",
+
+                                    fill: false,
+
+                                    tension: 0.4,
+
+                                    borderWidth: 3,
+
+                                    pointRadius: 3
+                                }
+
+                            ]
+                        },
+
+                        options: {
+
+                            responsive: true,
+
+                            maintainAspectRatio: false,
+
+                            plugins: {
+                                legend: {
+                                    labels: {
+                                        color: "#ffffff"
+                                    }
+                                }
+                            },
+
+                            scales: {
+
+                                x: {
+                                    ticks: {
+                                        color: "#cbd5e1"
+                                    },
+                                    grid: {
+                                        color:
+                                            "rgba(255,255,255,0.08)"
+                                    }
+                                },
+
+                                temperatureAxis: {
+
+                                    type: "linear",
+                                    position: "left",
+
+                                    ticks: {
+                                        color: "#f97316"
+                                    },
+
+                                    title: {
+                                        display: true,
+                                        text:
+                                            "Temperature (°C)",
+                                        color: "#f97316"
+                                    },
+
+                                    grid: {
+                                        color:
+                                            "rgba(255,255,255,0.08)"
+                                    }
+                                },
+
+                                humidityAxis: {
+
+                                    type: "linear",
+                                    position: "right",
+
+                                    ticks: {
+                                        color: "#38bdf8"
+                                    },
+
+                                    title: {
+                                        display: true,
+                                        text:
+                                            "Humidity (%)",
+                                        color: "#38bdf8"
+                                    },
+
+                                    grid: {
+                                        drawOnChartArea: false
+                                    }
+                                }
+
+                            }
+                        }
+
+                    });
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Error loading environment chart:",
+                    error
+                );
+
+            }
+
+        }
+
+        // =====================================================
+        // MQ135 CHART
+        // =====================================================
+
+        let mq135Chart = null;
+
+        async function loadMQ135Chart() {
+
+            try {
+
+                const response =
+                    await fetch("/api/recent-readings");
+
+                const result =
+                    await response.json();
+
+                if (
+                    !result.success ||
+                    !Array.isArray(result.data)
+                ) {
+                    return;
+                }
+
+                const readings =
+                    result.data;
+
+                const labels =
+                    readings.map(reading =>
+                        String(
+                            reading.timestamp || ""
+                        ).split(" ")[1] || ""
+                    );
+
+                const mq135Data =
+                    readings.map(reading =>
+                        Number(reading.mq135_raw) || 0
+                    );
+
+                const canvas =
+                    document.getElementById(
+                        "mq135Chart"
+                    );
+
+                if (!canvas) return;
+
+                if (mq135Chart) {
+
+                    mq135Chart.data.labels =
+                        labels;
+
+                    mq135Chart.data.datasets[0].data =
+                        mq135Data;
+
+                    mq135Chart.update();
+
+                    return;
+                }
+
+                mq135Chart =
+                    new Chart(canvas, {
+
+                        type: "line",
+
+                        data: {
+
+                            labels: labels,
+
+                            datasets: [{
+                                label:
+                                    "MQ135 Raw Level",
+
+                                data:
+                                    mq135Data,
+
+                                borderColor:
+                                    "#a855f7",
+
+                                backgroundColor:
+                                    "rgba(168,85,247,0.15)",
+
+                                fill: true,
+
+                                tension: 0.4,
+
+                                borderWidth: 3,
+
+                                pointRadius: 3
+                            }]
+                        },
+
+                        options: chartOptions()
+
+                    });
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Error loading MQ135 chart:",
+                    error
+                );
+
+            }
+
+        }
+
+        // =====================================================
+        // LOAD COMPLETE DASHBOARD
+        // =====================================================
+
+        async function loadDashboard() {
+
+            await Promise.allSettled([
+
+                loadLatestSensorData(),
+
+                loadDailyEnergy(),
+
+                loadWastageStatus(),
+
+                loadAlerts(),
+
+                loadPowerChart(),
+
+                loadEnvironmentChart(),
+
+                loadMQ135Chart()
+
+            ]);
+
+        }
+
+        // =====================================================
+        // INITIAL LOAD
+        // =====================================================
+
+        loadDashboard();
+
+        // Refresh every 5 seconds
+        setInterval(
+            loadDashboard,
+            5000
+        );
+
+    </script>
+
+</body>
+</html>
